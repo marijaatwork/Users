@@ -58,7 +58,7 @@ app.get('/users/:id', (req, res) => {
 
 // POST endpoint to add a new user
 app.post('/users', (req, res) => {
-  const { name, age } = req.body;
+  const { name, age, email, dateOfBirth } = req.body;
 
   if (!name) {
     res.status(400).json({ message: 'Name is required' });
@@ -69,6 +69,8 @@ app.post('/users', (req, res) => {
     id: generateUniqueId(),
     name,
     age: age || null,
+    email: email || null,
+    dateOfBirth: dateOfBirth || null
   };
 
   users.push(newUser);
