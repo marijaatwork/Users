@@ -20,5 +20,11 @@
     "age": 45,
     "email": "vesna@test.com",
     "dateOfBirth": "12.09.1978"
+  },
+  {
+    "id": 5,
+    "name": "Greagory",
+    "age": 33,
+    "email": "gregory@gmail.com"
   }
 ]
