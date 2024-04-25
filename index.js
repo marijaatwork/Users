@@ -34,12 +34,7 @@ function generateUniqueId() {
 }
 
 function isValidJson(data) {
-  try {
-    JSON.parse(data); // Attempt to parse JSON directly
-    return true;
-  } catch (error) {
-    return false;
-  }
+  return typeof data === 'object';
 }
 
 // JSON schema for user data validation
