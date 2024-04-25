@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+const { validate } = require('jsonschema');
 const app = express();
 
 app.use(bodyParser.json());
@@ -32,6 +33,22 @@ function generateUniqueId() {
   return users.length > 0 ? Math.max(...users.map(user => user.id)) + 1 : 1;
 }
 
+function isValidJson(data) {
+  return typeof data === 'object';
+}
+
+// JSON schema for user data validation
+const userSchema = {
+  type: 'object',
+  properties: {
+    name: { type: 'string', minLength: 1 },
+    age: { type: 'integer', minimum: 0 },
+    email: { type: 'string', format: 'email' },
+    dateOfBirth: { type: 'string', pattern: '^(0[1-9]|[12][0-9]|3[01])[./](0[1-9]|1[0-2])[./]\\d{4}$' }
+  },
+  required: ['name']
+};
+
 // GET endpoint to retrieve all users
 app.get('/users', (req, res) => {
   try {
@@ -58,19 +75,23 @@ app.get('/users/:id', (req, res) => {
 
 // POST endpoint to add a new user
 app.post('/users', (req, res) => {
-  const { name, age, email, dateOfBirth } = req.body;
+  const userData = req.body;
 
-  if (!name) {
-    res.status(400).json({ message: 'Name is required' });
-    return;
+  // Check if request body is valid JSON
+  if (!isValidJson(userData)) {
+    return res.status(400).json({ message: 'Invalid JSON in request body' });
+  }
+
+  // Validate user data against the schema
+  const validationResult = validate(userData, userSchema);
+  if (!validationResult.valid) {
+    const errors = validationResult.errors.map(error => error.stack);
+    return res.status(400).json({ message: 'Validation error', errors });
   }
 
   const newUser = {
     id: generateUniqueId(),
-    name,
-    age: age || null,
-    email: email || null,
-    dateOfBirth: dateOfBirth || null
+    ...userData
   };
 
   users.push(newUser);
@@ -85,12 +106,25 @@ app.put('/users/:id', (req, res) => {
 
   const index = users.findIndex(u => u.id === userId);
 
+
+  // Check if request body is valid JSON
+  if (!isValidJson(userData)) {
+    return res.status(400).json({ message: 'Invalid JSON in request body' });
+  }
+
   if (index !== -1 && updatedUser && updatedUser.name && updatedUser.age) {
+    // Validate user data against the schema
+    const validationResult = validate(updatedUser, userSchema);
+    if (!validationResult.valid) {
+      const errors = validationResult.errors.map(error => error.stack);
+      return res.status(400).json({ message: 'Validation error', errors });
+    }
+
     users[index] = { ...users[index], ...updatedUser };
     writeUsersToFile(); // Update the users file
     res.status(200).json(users[index]);
   } else {
-    res.status(400).json({ message: 'Invalid user data or user not found' });
+    res.status(404).json({ message: 'User not found' });
   }
 });
 
@@ -101,12 +135,24 @@ app.patch('/users/:id', (req, res) => {
 
   const index = users.findIndex(u => u.id === userId);
 
+  // Check if request body is valid JSON
+  if (!isValidJson(userData)) {
+    return res.status(400).json({ message: 'Invalid JSON in request body' });
+  }
+
   if (index !== -1 && updatedFields) {
+    // Validate user data against the schema
+    const validationResult = validate(updatedFields, userSchema);
+    if (!validationResult.valid) {
+      const errors = validationResult.errors.map(error => error.stack);
+      return res.status(400).json({ message: 'Validation error', errors });
+    }
+
     users[index] = { ...users[index], ...updatedFields };
     writeUsersToFile(); // Update the users file
     res.status(200).json(users[index]);
   } else {
-    res.status(400).json({ message: 'Invalid user data or user not found' });
+    res.status(404).json({ message: 'User not found' });
   }
 });
 
@@ -120,7 +166,7 @@ app.delete('/users/:id', (req, res) => {
     writeUsersToFile(); // Update the users file
     res.status(200).json(deletedUser[0]);
   } else {
-    res.status(400).json({ message: 'User not found' });
+    res.status(404).json({ message: 'User not found' });
   }
 });
 
