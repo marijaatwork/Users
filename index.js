@@ -103,6 +103,7 @@ app.post('/users', (req, res) => {
 app.put('/users/:id', (req, res) => {
   const userId = parseInt(req.params.id);
   const updatedUser = req.body;
+  const userData = req.body;
 
   const index = users.findIndex(u => u.id === userId);
 
@@ -132,6 +133,7 @@ app.put('/users/:id', (req, res) => {
 app.patch('/users/:id', (req, res) => {
   const userId = parseInt(req.params.id);
   const updatedFields = req.body;
+  const userData = req.body;
 
   const index = users.findIndex(u => u.id === userId);
 
